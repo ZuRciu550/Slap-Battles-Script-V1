@@ -1,0 +1,257 @@
+-- StarterPlayerScripts içine LocalScript
+
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local workspace = game:GetService("Workspace")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "MainMenu"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Fonksiyon: Frame'lere ve Button'lara köşe yuvarlatma ekle
+local function addUICorner(obj, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(radius, 0)
+	corner.Parent = obj
+end
+
+-- Ana Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0.8, 0, 0.8, 0)
+mainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.ZIndex = 1
+mainFrame.Parent = gui
+addUICorner(mainFrame, 0.15)
+
+-- Kapama (X) kaldırıldı, sadece “–” tuşu olacak
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 40, 0, 40)
+closeButton.Position = UDim2.new(1, -45, 0, 5)
+closeButton.Text = "–"
+closeButton.TextScaled = true
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.TextColor3 = Color3.new(1,1,1)
+closeButton.ZIndex = 2
+closeButton.Parent = mainFrame
+addUICorner(closeButton, 0.1)
+
+-- Sol Menü (ScrollingFrame)
+local leftMenu = Instance.new("ScrollingFrame")
+leftMenu.Size = UDim2.new(0.3, 0, 1, 0)
+leftMenu.Position = UDim2.new(0, 0, 0, 0)
+leftMenu.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+leftMenu.ScrollBarThickness = 6
+leftMenu.ZIndex = 1
+leftMenu.Parent = mainFrame
+addUICorner(leftMenu, 0.15)
+
+-- Sağ Menü (ScrollingFrame)
+local rightMenu = Instance.new("ScrollingFrame")
+rightMenu.Size = UDim2.new(0.7, 0, 1, 0)
+rightMenu.Position = UDim2.new(0.3, 0, 0, 0)
+rightMenu.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+rightMenu.ScrollBarThickness = 6
+rightMenu.ZIndex = 1
+rightMenu.Parent = mainFrame
+addUICorner(rightMenu, 0.15)
+
+-- UIListLayout
+local leftLayout = Instance.new("UIListLayout")
+leftLayout.Parent = leftMenu
+leftLayout.Padding = UDim.new(0, 5)
+leftLayout.FillDirection = Enum.FillDirection.Vertical
+
+local rightLayout = Instance.new("UIListLayout")
+rightLayout.Parent = rightMenu
+rightLayout.Padding = UDim.new(0, 5)
+rightLayout.FillDirection = Enum.FillDirection.Vertical
+
+-- Sol Menü Butonları
+local mainButton = Instance.new("TextButton")
+mainButton.Size = UDim2.new(1, -10, 0, 40)
+mainButton.BackgroundColor3 = Color3.fromRGB(255, 180, 0)
+mainButton.Text = "Main"
+mainButton.TextScaled = true
+mainButton.TextColor3 = Color3.new(1,1,1)
+mainButton.Parent = leftMenu
+addUICorner(mainButton, 0.1)
+
+local securityButton = Instance.new("TextButton")
+securityButton.Size = UDim2.new(1, -10, 0, 40)
+securityButton.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
+securityButton.Text = "Security"
+securityButton.TextScaled = true
+securityButton.TextColor3 = Color3.new(0,0,0)
+securityButton.Parent = leftMenu
+addUICorner(securityButton, 0.1)
+
+local teleportsButton = Instance.new("TextButton")
+teleportsButton.Size = UDim2.new(1, -10, 0, 40)
+teleportsButton.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+teleportsButton.Text = "Teleports"
+teleportsButton.TextScaled = true
+teleportsButton.TextColor3 = Color3.new(1,1,1)
+teleportsButton.Parent = leftMenu
+addUICorner(teleportsButton, 0.1)
+
+-----------------------------------------
+-- MAIN MENU (Auto Collect Slapple)
+-----------------------------------------
+
+local collecting = false
+
+local function teleportToSlapples()
+	while collecting do
+		local slapplesFolder = workspace:FindFirstChild("Arena") 
+			and workspace.Arena:FindFirstChild("island5") 
+			and workspace.Arena.island5:FindFirstChild("Slapples")
+		if slapplesFolder then
+			for _, slapple in ipairs(slapplesFolder:GetChildren()) do
+				if not collecting then break end
+				local glove = slapple:FindFirstChild("Glove")
+				if glove then
+					local character = player.Character or player.CharacterAdded:Wait()
+					local hrp = character:WaitForChild("HumanoidRootPart")
+					hrp.CFrame = glove.CFrame + Vector3.new(0,3,0)
+					task.wait(0.5)
+				end
+			end
+		end
+		task.wait(0.5)
+	end
+end
+
+local function openMainMenu()
+	for _, child in ipairs(rightMenu:GetChildren()) do
+		if child:IsA("TextButton") or child:IsA("TextLabel") then
+			child:Destroy()
+		end
+	end
+
+	local toggleButton = Instance.new("TextButton")
+	toggleButton.Size = UDim2.new(1, -10, 0, 40)
+	toggleButton.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
+	toggleButton.Text = "Auto Collect Slapple: OFF"
+	toggleButton.TextScaled = true
+	toggleButton.TextColor3 = Color3.new(1,1,1)
+	toggleButton.Parent = rightMenu
+	addUICorner(toggleButton, 0.1)
+
+	toggleButton.MouseButton1Click:Connect(function()
+		collecting = not collecting
+		if collecting then
+			toggleButton.Text = "Auto Collect Slapple: ON"
+			task.spawn(teleportToSlapples)
+		else
+			toggleButton.Text = "Auto Collect Slapple: OFF"
+		end
+	end)
+end
+mainButton.MouseButton1Click:Connect(openMainMenu)
+
+-----------------------------------------
+-- TELEPORTS MENU
+-----------------------------------------
+local teleportCoords = {
+	Vector3.new(-999, 328, -1),
+	Vector3.new(-394, 51, -15),
+	Vector3.new(-125, -5, 122),
+	Vector3.new(266, 34, 198),
+	Vector3.new(225, -16, -10),
+	Vector3.new(108, 359, -2)
+}
+
+local function openTeleportsMenu()
+	for _, child in ipairs(rightMenu:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+	for i, pos in ipairs(teleportCoords) do
+		local tpButton = Instance.new("TextButton")
+		tpButton.Size = UDim2.new(1, -10, 0, 40)
+		tpButton.BackgroundColor3 = Color3.fromRGB(150, 80, 80)
+		tpButton.Text = "Teleport " .. i
+		tpButton.TextScaled = true
+		tpButton.TextColor3 = Color3.new(1,1,1)
+		tpButton.Parent = rightMenu
+		addUICorner(tpButton, 0.1)
+
+		tpButton.MouseButton1Click:Connect(function()
+			local character = player.Character or player.CharacterAdded:Wait()
+			local hrp = character:WaitForChild("HumanoidRootPart")
+			hrp.CFrame = CFrame.new(pos)
+		end)
+	end
+end
+teleportsButton.MouseButton1Click:Connect(openTeleportsMenu)
+
+-----------------------------------------
+-- SECURITY MENU
+-----------------------------------------
+local defaultPart = nil
+
+local function openSecurityMenu()
+	for _, child in ipairs(rightMenu:GetChildren()) do
+		if child:IsA("TextButton") or child:IsA("TextLabel") then
+			child:Destroy()
+		end
+	end
+
+	local spawnDefault = Instance.new("TextButton")
+	spawnDefault.Size = UDim2.new(1, -10, 0, 40)
+	spawnDefault.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+	spawnDefault.Text = "Spawn Default Security Part"
+	spawnDefault.TextScaled = true
+	spawnDefault.TextColor3 = Color3.new(1,1,1)
+	spawnDefault.Parent = rightMenu
+	addUICorner(spawnDefault, 0.1)
+
+	spawnDefault.MouseButton1Click:Connect(function()
+		if defaultPart and defaultPart.Parent then
+			defaultPart:Destroy()
+		end
+		defaultPart = Instance.new("Part")
+		defaultPart.Size = Vector3.new(1500,5,1500)
+		defaultPart.Position = Vector3.new(-5,-13,8)
+		defaultPart.Anchored = true
+		defaultPart.CanCollide = true
+		defaultPart.Transparency = 0.5
+		defaultPart.Parent = workspace
+	end)
+
+	local removeDefault = Instance.new("TextButton")
+	removeDefault.Size = UDim2.new(1, -10, 0, 40)
+	removeDefault.BackgroundColor3 = Color3.fromRGB(255,50,50)
+	removeDefault.Text = "Remove Default Security Part"
+	removeDefault.TextScaled = true
+	removeDefault.TextColor3 = Color3.new(1,1,1)
+	removeDefault.Parent = rightMenu
+	addUICorner(removeDefault, 0.1)
+
+	removeDefault.MouseButton1Click:Connect(function()
+		if defaultPart and defaultPart.Parent then
+			defaultPart:Destroy()
+			defaultPart = nil
+		end
+	end)
+end
+securityButton.MouseButton1Click:Connect(openSecurityMenu)
+
+-- – tuşu kapatma (tamamen yok etsin)
+closeButton.MouseButton1Click:Connect(function()
+	collecting = false -- Auto collect dursun
+	mainFrame:Destroy() -- Menü komple yok olsun
+end)
+
+-- G tuşu toggle (menu kapatılmamışsa)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.G then
+		if mainFrame and mainFrame.Parent then
+			mainFrame.Visible = not mainFrame.Visible
+		end
+	end
+end)
